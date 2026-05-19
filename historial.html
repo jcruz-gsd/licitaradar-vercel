@@ -44,6 +44,13 @@ document.getElementById('app-root').innerHTML = `
               <option value="Adjudicada">Adjudicada</option>
               <option value="Evaluacion">En evaluación</option>
             </select>
+            <select class="filter-select" id="kw-filter">
+              <option value="">Todas las categorías</option>
+              <option value="software">Software y soluciones</option>
+              <option value="computador">Equipos y hardware</option>
+              <option value="soporte técnico">Servicios TI</option>
+              <option value="telecomunicaciones">Telecomunicaciones</option>
+            </select>
             <button class="btn btn-primary" id="btn-buscar">Buscar</button>
           </div>
         </div>
@@ -76,9 +83,11 @@ document.getElementById('btn-export').addEventListener('click', exportCSV);
 async function loadHistorial() {
   const q      = document.getElementById('q').value.trim();
   const estado = document.getElementById('estado-filter').value;
+  const kw     = document.getElementById('kw-filter').value;
   const params = { page: currentPage, per_page: PER_PAGE };
   if (q)      params.q      = q;
   if (estado) params.estado = estado;
+  if (kw)     params.q      = kw;   // busca por keyword de categoría
 
   document.getElementById('table-area').innerHTML =
     '<div style="padding:50px;text-align:center;"><div class="spinner"></div></div>';

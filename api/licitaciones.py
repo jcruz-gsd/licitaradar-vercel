@@ -40,8 +40,12 @@ class handler(BaseHTTPRequestHandler):
                        .range(offset, offset + per_page - 1))
 
             if q:
-                # OR search across nombre and organismo
-                query = query.or_(f"nombre.ilike.%{q}%,organismo.ilike.%{q}%")
+                # Busca en nombre, organismo y descripcion
+                query = query.or_(
+                    f"nombre.ilike.*{q}*,"
+                    f"organismo.ilike.*{q}*,"
+                    f"descripcion.ilike.*{q}*"
+                )
             if estado:
                 query = query.ilike("estado", f"%{estado}%")
 
