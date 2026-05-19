@@ -143,10 +143,24 @@ def save_new(filtered, sb):
     return nuevas
 
 
-def send_email(nuevas, fecha):
+def get_config(sb):
+    """Lee configuración desde app_config, con fallback a env vars."""
+    try:
+        rows = sb.table("app_config").select("key,value").execute().data or []
+        return {r["key"]: r["value"] for r in rows}
+    except Exception:
+        return {}
+
+def send_email(nuevas, fecha, cfg=None):
     e_from = os.environ.get("EMAIL_SENDER", "")
     e_pass = os.environ.get("EMAIL_PASSWORD", "")
-    e_to   = os.environ.get("EMAIL_RECEIVER", "")
+    # Destinatarios: desde config DB o env var
+    if cfg and cfg.get("email_receivers"):
+        e_to = cfg["email_receivers"]
+    else:
+        e_to = os.environ.get("EMAIL_RECEIVER", "")
+    # Asunto personalizable
+    subject_prefix = (cfg or {}).get("email_subject_prefix", "LicitaRadar")
     if not all([e_from, e_pass, e_to]):
         return False
 
@@ -183,7 +197,7 @@ def send_email(nuevas, fecha):
 </div></body></html>"""
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"LicitaRadar — {len(nuevas)} licitación(es) nueva(s) · {fecha}"
+    msg["Subject"] = f"{subject_prefix} — {len(nuevas)} licitación(es) nueva(s) · {fecha}"
     msg["From"]    = e_from
     msg["To"]      = e_to
     msg.attach(MIMEText(html, "html", "utf-8"))
@@ -208,6 +222,7 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             sb   = get_sb()
+            cfg  = get_config(sb)
             hoy  = datetime.now().strftime("%d%m%Y")
             leg  = datetime.now().strftime("%d/%m/%Y %H:%M")
             all_ = fetch_lics(hoy)
@@ -215,7 +230,7 @@ class handler(BaseHTTPRequestHandler):
             new  = save_new(fil, sb)
             ok   = False
             if new:
-                ok = send_email(new, leg)
+                ok = send_email(new, leg, cfg)
                 if ok:
                     codigos = [n["codigo_externo"] for n in new]
                     for c in codigos:

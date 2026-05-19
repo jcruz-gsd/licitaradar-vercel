@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LicitaRadar — Configuración</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .section-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .section-sub   { font-size:13px; color:var(--muted); margin-bottom:20px; }
+    .form-row      { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .field         { margin-bottom:16px; }
+    .field label   { display:block; font-size:11px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .field input, .field select, .field textarea {
+      width:100%; padding:10px 12px; border:1.5px solid var(--border);
+      border-radius:var(--r-sm); font-size:13px; color:var(--text);
+      background:#FAFAFA; font-family:inherit; outline:none;
+      transition:border-color .15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--navy); background:#fff; }
+    .field textarea { resize:vertical; min-height:80px; }
+    .field .hint    { font-size:11px; color:var(--muted); margin-top:4px; }
+    .divider        { border:none; border-top:1px solid var(--border); margin:28px 0; }
+    .tag-list       { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .email-tag      { display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:4px 10px; font-size:12px; color:var(--text-mid); }
+    .email-tag button { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0; transition:color .15s; }
+    .email-tag button:hover { color:#dc2626; }
+    .user-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+    .user-row:last-child { border-bottom:none; }
+    .user-avatar-sm { width:34px; height:34px; border-radius:50%; background:rgba(0,196,212,.15); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--teal); flex-shrink:0; }
+    .user-name  { font-size:13px; font-weight:600; color:var(--text); }
+    .user-email-txt { font-size:12px; color:var(--muted); }
+    .rol-badge  { font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; border:1px solid; }
+    .rol-admin  { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
+    .rol-user   { background:#f8fafc; color:#64748b; border-color:var(--border); }
+    .user-actions { margin-left:auto; display:flex; gap:6px; }
+    .btn-sm     { padding:5px 10px; font-size:12px; }
+    .btn-danger { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+    .btn-danger:hover { background:#fee2e2; }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; display:flex; align-items:center; justify-content:center; }
+    .modal { background:#fff; border-radius:var(--r); padding:28px 32px; width:100%; max-width:440px; box-shadow:var(--shadow-md); }
+    .modal-title { font-size:18px; font-weight:700; color:var(--text); margin-bottom:20px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+    .inactive-row { opacity:.45; }
+  </style>
+</head>
+<body>
+<div id="app-root"></div>
+<div id="modal-new-user" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-title">Agregar usuario</div>
+    <div class="field"><label>Nombre</label><input type="text" id="nu-nombre" placeholder="Ej: María González"></div>
+    <div class="field"><label>Correo electrónico</label><input type="email" id="nu-email" placeholder="maria@empresa.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="nu-pwd" placeholder="Mínimo 6 caracteres"></div>
+    <div class="field"><label>Rol</label>
+      <select id="nu-rol">
+        <option value="usuario">Usuario (solo lectura)</option>
+        <option value="admin">Administrador (acceso total)</option>
+      </select>
+    </div>
+    <div id="nu-error" class="error-msg"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="nu-submit" onclick="submitNewUser()">Agregar usuario</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+document.getElementById('app-root').innerHTML = `
+<div class="app">
+  ${sidebarHTML()}
+  <div class="main">
+    ${topbarHTML()}
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Configuración</div>
+          <div class="page-sub">Gestiona notificaciones, correos y accesos a la plataforma</div>
+        </div>
+      </div>
+
+      <div id="global-alert" class="alert" style="display:none;margin-bottom:16px;"></div>
+
+      <!-- Notificaciones por correo -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">📧 Notificaciones por correo</span>
+        </div>
+        <div class="card-body">
+          <p class="section-sub">Configura a quién se envían las alertas cuando se detectan nuevas licitaciones.</p>
+
+          <div class="field">
+            <label>Asunto del correo</label>
+            <input type="text" id="cfg-subject" placeholder="LicitaRadar — Nueva licitación detectada">
+            <div class="hint">Se agrega automáticamente: "— N licitación(es) nueva(s) · fecha"</div>
+          </div>
+
+          <div class="field">
+            <label>Destinatarios</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="email" id="new-email-input" placeholder="correo@empresa.com" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter'){addEmail();}">
+              <button class="btn btn-primary btn-sm" onclick="addEmail()">+ Agregar</button>
+            </div>
+            <div class="tag-list" id="email-tags"></div>
+            <div class="hint">Puedes agregar múltiples destinatarios. Todos recibirán el mismo correo.</div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button class="btn btn-primary" id="btn-save-email" onclick="saveEmailConfig()">
+              Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usuarios -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👥 Usuarios de la plataforma</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal()">+ Nuevo usuario</button>
+        </div>
+        <div class="card-body" style="padding:0 22px;">
+          <div id="users-list">
+            <div style="padding:30px;text-align:center;"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>`;
+
+initSidebar('configuracion');
+setLastUpdated();
+
+// ── Estado local ──────────────────────────────────
+let emailList = [];
+
+// ── Carga inicial ─────────────────────────────────
+loadConfig();
+loadUsers();
+
+async function loadConfig() {
+  try {
+    const cfg = await apiFetch('/api/config');
+    // Asunto
+    if (cfg.email_subject_prefix)
+      document.getElementById('cfg-subject').value = cfg.email_subject_prefix;
+    // Destinatarios
+    if (cfg.email_receivers) {
+      emailList = cfg.email_receivers.split(',').map(e => e.trim()).filter(Boolean);
+      renderEmailTags();
+    }
+  } catch(e) { showAlert('err', 'Error cargando configuración: ' + e.message); }
+}
+
+async function loadUsers() {
+  try {
+    const d = await apiFetch('/api/users');
+    renderUsers(d.users || []);
+  } catch(e) {
+    document.getElementById('users-list').innerHTML =
+      `<div class="alert alert-err" style="margin:16px 0;">Error cargando usuarios: ${e.message}</div>`;
+  }
+}
+
+// ── Email tags ────────────────────────────────────
+function renderEmailTags() {
+  document.getElementById('email-tags').innerHTML = emailList.map(e => `
+    <span class="email-tag">
+      ${e}
+      <button onclick="removeEmail('${e}')" title="Eliminar">×</button>
+    </span>`).join('');
+}
+
+function addEmail() {
+  const input = document.getElementById('new-email-input');
+  const val   = input.value.trim().toLowerCase();
+  if (!val || !val.includes('@')) return;
+  if (emailList.includes(val)) { input.value = ''; return; }
+  emailList.push(val);
+  renderEmailTags();
+  input.value = '';
+}
+
+function removeEmail(email) {
+  emailList = emailList.filter(e => e !== email);
+  renderEmailTags();
+}
+
+async function saveEmailConfig() {
+  const btn     = document.getElementById('btn-save-email');
+  const subject = document.getElementById('cfg-subject').value.trim();
+  if (!emailList.length) return showAlert('err', 'Agrega al menos un destinatario.');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await apiFetch('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({
+        email_receivers:      emailList.join(','),
+        email_subject_prefix: subject || 'LicitaRadar',
+      })
+    });
+    showAlert('ok', 'Configuración guardada correctamente.');
+  } catch(e) { showAlert('err', 'Error al guardar: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
+}
+
+// ── Usuarios ──────────────────────────────────────
+function renderUsers(users) {
+  if (!users.length) {
+    document.getElementById('users-list').innerHTML =
+      '<div class="empty" style="padding:40px 0;"><div class="empty-title">Sin usuarios adicionales</div><div class="empty-sub">Agrega usuarios con el botón "Nuevo usuario"</div></div>';
+    return;
+  }
+  document.getElementById('users-list').innerHTML = users.map(u => `
+    <div class="user-row ${u.activo ? '' : 'inactive-row'}">
+      <div class="user-avatar-sm">${(u.nombre || u.email).charAt(0).toUpperCase()}</div>
+      <div>
+        <div class="user-name">${u.nombre || '—'}</div>
+        <div class="user-email-txt">${u.email}</div>
+      </div>
+      <span class="rol-badge ${u.rol === 'admin' ? 'rol-admin' : 'rol-user'}">${u.rol === 'admin' ? 'Admin' : 'Usuario'}</span>
+      ${u.activo
+        ? `<div class="user-actions">
+             <button class="btn btn-outline btn-sm" onclick="changePassword('${u.email}')">Cambiar clave</button>
+             <button class="btn btn-danger btn-sm" onclick="deactivateUser('${u.email}')">Desactivar</button>
+           </div>`
+        : `<span style="margin-left:auto;font-size:11px;color:var(--muted);">Desactivado</span>`
+      }
+    </div>`).join('');
+}
+
+function openModal() {
+  document.getElementById('modal-new-user').style.display = 'flex';
+  document.getElementById('nu-error').style.display = 'none';
+  ['nu-nombre','nu-email','nu-pwd'].forEach(id => document.getElementById(id).value = '');
+}
+function closeModal() { document.getElementById('modal-new-user').style.display = 'none'; }
+
+async function submitNewUser() {
+  const btn    = document.getElementById('nu-submit');
+  const errEl  = document.getElementById('nu-error');
+  const nombre = document.getElementById('nu-nombre').value.trim();
+  const email  = document.getElementById('nu-email').value.trim();
+  const pwd    = document.getElementById('nu-pwd').value.trim();
+  const rol    = document.getElementById('nu-rol').value;
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Agregando…';
+  try {
+    const r = await apiFetch('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ nombre, email, password: pwd, rol })
+    });
+    closeModal();
+    showAlert('ok', `Usuario ${email} creado correctamente.`);
+    loadUsers();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Agregar usuario'; }
+}
+
+async function deactivateUser(email) {
+  if (!confirm(`¿Desactivar el acceso de ${email}?`)) return;
+  try {
+    await apiFetch('/api/users?del=1', { method:'POST', body: JSON.stringify({ email }) });
+    showAlert('ok', `Usuario ${email} desactivado.`);
+    loadUsers();
+  } catch(e) { showAlert('err', 'Error: ' + e.message); }
+}
+
+async function changePassword(email) {
+  const pwd = prompt(`Nueva contraseña para ${email} (mínimo 6 caracteres):`);
+  if (!pwd) return;
+  if (pwd.length < 6) return alert('La contraseña debe tener al menos 6 caracteres.');
+  try {
+    await apiFetch('/api/users?pwd=1', { method:'POST', body: JSON.stringify({ email, password: pwd }) });
+    showAlert('ok', 'Contraseña actualizada correctamente.');
+  } catch(e) { showAlert('err', 'Error: ' + e.message); }
+}
+
+// ── Helpers ───────────────────────────────────────
+function showAlert(type, msg) {
+  const el  = document.getElementById('global-alert');
+  const ico = type === 'ok'
+    ? '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  el.className = `alert alert-${type === 'ok' ? 'ok' : 'err'}`;
+  el.innerHTML = ico + `<div>${msg}</div>`;
+  el.style.display = 'flex';
+  window.scrollTo(0, 0);
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// Cierra modal al hacer clic fuera
+document.getElementById('modal-new-user').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
