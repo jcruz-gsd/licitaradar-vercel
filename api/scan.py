@@ -64,6 +64,21 @@ EXCLUSION_KEYWORDS = [
 ALL_KEYWORDS = [kw for kws in CATEGORIAS.values() for kw in kws]
 
 
+def get_keywords_config(cfg):
+    """Lee categorías y exclusiones desde app_config.
+    Si no hay config guardada, usa los valores hardcodeados como fallback."""
+    categorias  = CATEGORIAS
+    exclusiones = EXCLUSION_KEYWORDS
+    if cfg.get("keywords_json"):
+        try:
+            categorias = json.loads(cfg["keywords_json"])
+        except Exception:
+            pass
+    if cfg.get("exclusion_keywords"):
+        exclusiones = [k.strip() for k in cfg["exclusion_keywords"].split(",") if k.strip()]
+    return categorias, exclusiones
+
+
 def get_sb():
     return create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
@@ -81,25 +96,30 @@ def fetch_lics(fecha):
         return []
 
 
-def do_filter(licitaciones):
+def do_filter(licitaciones, categorias=None, exclusiones=None):
+    if categorias is None:
+        categorias = CATEGORIAS
+    if exclusiones is None:
+        exclusiones = EXCLUSION_KEYWORDS
+    all_kws = [kw for kws in categorias.values() for kw in kws]
     out = []
     for l in licitaciones:
         nombre = str(l.get("Nombre", "")).lower()
         desc   = str(l.get("Descripcion", "")).lower()
         text   = nombre + " " + desc
 
-        # 1. Verificar que tenga al menos un keyword de TI
-        matched = [kw for kw in ALL_KEYWORDS if kw in text]
+        # 1. Verificar que tenga al menos un keyword relevante
+        matched = [kw for kw in all_kws if kw in text]
         if not matched:
             continue
 
-        # 2. Descartar si contiene palabras de otros rubros
-        if any(ex in text for ex in EXCLUSION_KEYWORDS):
+        # 2. Descartar si contiene palabras de exclusión
+        if any(ex in text for ex in exclusiones):
             log.info("Descartada por exclusión: %s", l.get("Nombre", ""))
             continue
 
         l["_kw"] = matched
-        for cat, kws in CATEGORIAS.items():
+        for cat, kws in categorias.items():
             if any(k in matched for k in kws):
                 l["_cat"] = cat
                 break
@@ -226,7 +246,8 @@ class handler(BaseHTTPRequestHandler):
             hoy  = datetime.now().strftime("%d%m%Y")
             leg  = datetime.now().strftime("%d/%m/%Y %H:%M")
             all_ = fetch_lics(hoy)
-            fil  = do_filter(all_)
+            cats, excl = get_keywords_config(cfg)
+            fil  = do_filter(all_, cats, excl)
             new  = save_new(fil, sb)
             ok   = False
             if new:

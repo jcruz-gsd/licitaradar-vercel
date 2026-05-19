@@ -8,7 +8,6 @@
   <style>
     .section-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
     .section-sub   { font-size:13px; color:var(--muted); margin-bottom:20px; }
-    .form-row      { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .field         { margin-bottom:16px; }
     .field label   { display:block; font-size:11px; font-weight:700; color:var(--text-mid); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
     .field input, .field select, .field textarea {
@@ -25,6 +24,28 @@
     .email-tag      { display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:4px 10px; font-size:12px; color:var(--text-mid); }
     .email-tag button { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0; transition:color .15s; }
     .email-tag button:hover { color:#dc2626; }
+
+    /* ── Keyword management ─────────────────────────── */
+    .cat-card        { border:1.5px solid var(--border); border-radius:var(--r); margin-bottom:12px; background:#fff; }
+    .cat-header      { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); background:#FAFAFA; border-radius:var(--r) var(--r) 0 0; }
+    .cat-name-input  { flex:1; border:none; background:transparent; font-size:14px; font-weight:700; color:var(--text); font-family:inherit; outline:none; padding:0; }
+    .cat-name-input:focus { border-bottom:2px solid var(--teal); }
+    .cat-body        { padding:12px 16px; }
+    .kw-tag          { display:inline-flex; align-items:center; gap:5px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:20px; padding:3px 10px; font-size:12px; color:#1D4ED8; }
+    .kw-tag button   { background:none; border:none; color:#93C5FD; cursor:pointer; font-size:13px; line-height:1; padding:0; transition:color .15s; }
+    .kw-tag button:hover { color:#DC2626; }
+    .excl-tag        { display:inline-flex; align-items:center; gap:5px; background:#FEF2F2; border:1px solid #FECACA; border-radius:20px; padding:3px 10px; font-size:12px; color:#B91C1C; }
+    .excl-tag button { background:none; border:none; color:#FCA5A5; cursor:pointer; font-size:13px; line-height:1; padding:0; transition:color .15s; }
+    .excl-tag button:hover { color:#DC2626; }
+    .kw-add-row      { display:flex; gap:8px; margin-top:10px; }
+    .kw-add-input    { flex:1; padding:6px 10px; border:1.5px solid var(--border); border-radius:var(--r-sm); font-size:12px; color:var(--text); background:#fff; font-family:inherit; outline:none; transition:border-color .15s; }
+    .kw-add-input:focus { border-color:var(--navy); }
+    .btn-del-cat     { background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; line-height:1; padding:2px 4px; transition:color .15s; }
+    .btn-del-cat:hover { color:#DC2626; }
+    .add-cat-btn     { width:100%; padding:10px; border:2px dashed var(--border); border-radius:var(--r); background:none; cursor:pointer; font-size:13px; color:var(--muted); font-family:inherit; transition:all .15s; margin-bottom:4px; }
+    .add-cat-btn:hover { border-color:var(--teal); color:var(--teal); background:#F0FDFE; }
+
+    /* ── Users ──────────────────────────────────────── */
     .user-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
     .user-row:last-child { border-bottom:none; }
     .user-avatar-sm { width:34px; height:34px; border-radius:50%; background:rgba(0,196,212,.15); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--teal); flex-shrink:0; }
@@ -46,6 +67,8 @@
 </head>
 <body>
 <div id="app-root"></div>
+
+<!-- Modal: nuevo usuario -->
 <div id="modal-new-user" class="modal-overlay" style="display:none;">
   <div class="modal">
     <div class="modal-title">Agregar usuario</div>
@@ -77,13 +100,13 @@ document.getElementById('app-root').innerHTML = `
       <div class="page-header">
         <div>
           <div class="page-title">Configuración</div>
-          <div class="page-sub">Gestiona notificaciones, correos y accesos a la plataforma</div>
+          <div class="page-sub">Gestiona notificaciones, filtros de búsqueda y accesos a la plataforma</div>
         </div>
       </div>
 
       <div id="global-alert" class="alert" style="display:none;margin-bottom:16px;"></div>
 
-      <!-- Notificaciones por correo -->
+      <!-- ① Notificaciones por correo -->
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header">
           <span class="card-title">📧 Notificaciones por correo</span>
@@ -100,7 +123,9 @@ document.getElementById('app-root').innerHTML = `
           <div class="field">
             <label>Destinatarios</label>
             <div style="display:flex;gap:8px;margin-bottom:8px;">
-              <input type="email" id="new-email-input" placeholder="correo@empresa.com" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter'){addEmail();}">
+              <input type="email" id="new-email-input" placeholder="correo@empresa.com"
+                style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;"
+                onkeydown="if(event.key==='Enter'){addEmail();}">
               <button class="btn btn-primary btn-sm" onclick="addEmail()">+ Agregar</button>
             </div>
             <div class="tag-list" id="email-tags"></div>
@@ -115,7 +140,47 @@ document.getElementById('app-root').innerHTML = `
         </div>
       </div>
 
-      <!-- Usuarios -->
+      <!-- ② Filtros de búsqueda -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">🔍 Filtros de búsqueda</span>
+          <button class="btn btn-primary btn-sm" onclick="addCategory()">+ Nueva categoría</button>
+        </div>
+        <div class="card-body">
+          <p class="section-sub">
+            Solo llegarán a tu correo licitaciones que contengan <strong>al menos una palabra clave</strong>
+            de las categorías y que <strong>no</strong> contengan ninguna palabra de la lista de exclusiones.
+          </p>
+
+          <div class="section-title" style="margin-bottom:12px;">Categorías y palabras clave</div>
+          <div id="cat-list">
+            <div style="padding:30px;text-align:center;"><div class="spinner"></div></div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="section-title">Palabras de exclusión</div>
+          <p class="section-sub" style="margin-top:4px;">
+            Si una licitación contiene alguna de estas palabras, se descarta aunque tenga palabras clave de TI.<br>
+            <em>Útil para filtrar licitaciones de construcción, vehículos, alimentación, etc.</em>
+          </p>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input type="text" id="new-excl-input" placeholder="Ej: gasfitería"
+              style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:inherit;outline:none;"
+              onkeydown="if(event.key==='Enter'){addExclusion();}">
+            <button class="btn btn-outline btn-sm" onclick="addExclusion()">+ Agregar</button>
+          </div>
+          <div class="tag-list" id="excl-tags"></div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+            <button class="btn btn-primary" id="btn-save-kw" onclick="saveKeywords()">
+              Guardar filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Usuarios -->
       <div class="card">
         <div class="card-header">
           <span class="card-title">👥 Usuarios de la plataforma</span>
@@ -135,43 +200,109 @@ document.getElementById('app-root').innerHTML = `
 initSidebar('configuracion');
 setLastUpdated();
 
-// ── Estado local ──────────────────────────────────
-let emailList = [];
+// ═══════════════════════════════════════════════
+//  DEFAULTS
+// ═══════════════════════════════════════════════
+const DEFAULT_CATEGORIAS = {
+  "Software y soluciones": [
+    "software","solución tecnológica","solución digital","desarrollo web",
+    "desarrollo de software","aplicación móvil","plataforma digital",
+    "transformación digital","sistema informático","sistema de información",
+    "erp","crm","business intelligence","app móvil","sistema de gestión","portal web"
+  ],
+  "Equipos y hardware": [
+    "computador","laptop","notebook","tablet","monitor","impresora",
+    "equipo computacional","equipamiento tecnológico","equipos de computación",
+    "hardware","dispositivos tecnológicos","servidor","storage","ups computacional",
+    "data center","equipo informático","pc escritorio","all in one"
+  ],
+  "Servicios TI": [
+    "soporte técnico informático","soporte ti","mantención de equipos computacionales",
+    "mantención de sistemas","mantención de red","mantención correctiva de equipos",
+    "infraestructura ti","redes informáticas","redes de datos","ciberseguridad",
+    "seguridad informática","helpdesk","mesa de ayuda","licencias de software",
+    "cloud computing","hosting","datacenter","virtualización","backup",
+    "soporte de software","administración de sistemas"
+  ],
+  "Telecomunicaciones": [
+    "telecomunicaciones","telefonía ip","internet","fibra óptica","conectividad",
+    "banda ancha","voip","comunicaciones unificadas","red wan","red lan","enlace dedicado"
+  ]
+};
+const DEFAULT_EXCLUSIONES = [
+  "inmueble","edificio","remodelación","ampliación","construcción","ascensor",
+  "caldera","gasfitería","gasfiter","plomería","sanitario","cañería","pintura",
+  "techumb","paviment","jardinería","aseo","limpieza","fumigación","vehículo",
+  "ambulancia","camión","furgón","bus","alimento","alimentación","colación",
+  "catering","dental","odontológico","médico","clínico","fármaco","vestuario",
+  "uniforme","calzado","textil","mueble","mobiliario","silla",
+  "escritorio de oficina","arriendo de inmueble","comodato de inmueble"
+];
 
-// ── Carga inicial ─────────────────────────────────
+// ═══════════════════════════════════════════════
+//  ESTADO LOCAL
+// ═══════════════════════════════════════════════
+let emailList = [];
+// cats: [{ name: string, keywords: string[] }]
+let cats = [];
+let excl = [];
+
+// ═══════════════════════════════════════════════
+//  CARGA INICIAL
+// ═══════════════════════════════════════════════
 loadConfig();
 loadUsers();
 
 async function loadConfig() {
   try {
     const cfg = await apiFetch('/api/config');
-    // Asunto
+    // Correo
     if (cfg.email_subject_prefix)
       document.getElementById('cfg-subject').value = cfg.email_subject_prefix;
-    // Destinatarios
     if (cfg.email_receivers) {
       emailList = cfg.email_receivers.split(',').map(e => e.trim()).filter(Boolean);
       renderEmailTags();
     }
-  } catch(e) { showAlert('err', 'Error cargando configuración: ' + e.message); }
-}
-
-async function loadUsers() {
-  try {
-    const d = await apiFetch('/api/users');
-    renderUsers(d.users || []);
+    // Keywords
+    if (cfg.keywords_json) {
+      try {
+        const dict = JSON.parse(cfg.keywords_json);
+        cats = dictToCats(dict);
+      } catch { cats = dictToCats(DEFAULT_CATEGORIAS); }
+    } else {
+      cats = dictToCats(DEFAULT_CATEGORIAS);
+    }
+    if (cfg.exclusion_keywords) {
+      excl = cfg.exclusion_keywords.split(',').map(k => k.trim()).filter(Boolean);
+    } else {
+      excl = [...DEFAULT_EXCLUSIONES];
+    }
   } catch(e) {
-    document.getElementById('users-list').innerHTML =
-      `<div class="alert alert-err" style="margin:16px 0;">Error cargando usuarios: ${e.message}</div>`;
+    showAlert('err', 'Error cargando configuración: ' + e.message);
+    cats = dictToCats(DEFAULT_CATEGORIAS);
+    excl = [...DEFAULT_EXCLUSIONES];
   }
+  renderCategories();
+  renderExclusions();
 }
 
-// ── Email tags ────────────────────────────────────
+function dictToCats(dict) {
+  return Object.entries(dict).map(([name, keywords]) => ({ name, keywords: [...keywords] }));
+}
+function catsToDict() {
+  const d = {};
+  cats.forEach(c => { if (c.name.trim()) d[c.name.trim()] = c.keywords; });
+  return d;
+}
+
+// ═══════════════════════════════════════════════
+//  EMAIL
+// ═══════════════════════════════════════════════
 function renderEmailTags() {
   document.getElementById('email-tags').innerHTML = emailList.map(e => `
     <span class="email-tag">
-      ${e}
-      <button onclick="removeEmail('${e}')" title="Eliminar">×</button>
+      ${escHtml(e)}
+      <button onclick="removeEmail('${escAttr(e)}')" title="Eliminar">×</button>
     </span>`).join('');
 }
 
@@ -203,12 +334,155 @@ async function saveEmailConfig() {
         email_subject_prefix: subject || 'LicitaRadar',
       })
     });
-    showAlert('ok', 'Configuración guardada correctamente.');
+    showAlert('ok', 'Configuración de correo guardada.');
   } catch(e) { showAlert('err', 'Error al guardar: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
 }
 
-// ── Usuarios ──────────────────────────────────────
+// ═══════════════════════════════════════════════
+//  KEYWORDS — CATEGORÍAS
+// ═══════════════════════════════════════════════
+function renderCategories() {
+  const el = document.getElementById('cat-list');
+  if (!cats.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Sin categorías. Usa el botón "+ Nueva categoría".</p>';
+  } else {
+    el.innerHTML = cats.map((cat, idx) => `
+      <div class="cat-card" id="cat-card-${idx}">
+        <div class="cat-header">
+          <input class="cat-name-input" type="text" value="${escHtml(cat.name)}"
+            onchange="renameCat(${idx}, this.value)"
+            placeholder="Nombre de la categoría">
+          <button class="btn-del-cat" onclick="removeCategory(${idx})" title="Eliminar categoría">×</button>
+        </div>
+        <div class="cat-body">
+          <div class="tag-list">
+            ${cat.keywords.map(kw => `
+              <span class="kw-tag">
+                ${escHtml(kw)}
+                <button onclick="removeKeyword(${idx},'${escAttr(kw)}')" title="Eliminar">×</button>
+              </span>`).join('')}
+          </div>
+          <div class="kw-add-row">
+            <input class="kw-add-input" type="text" id="kw-input-${idx}"
+              placeholder="Escribe una palabra clave y presiona Enter…"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addKeyword(${idx});}">
+            <button class="btn btn-outline btn-sm" onclick="addKeyword(${idx})">+ Agregar</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  // Add-category button always at the bottom
+  el.insertAdjacentHTML('beforeend',
+    '<button class="add-cat-btn" onclick="addCategory()">+ Agregar nueva categoría</button>');
+}
+
+function renameCat(idx, newName) {
+  cats[idx].name = newName.trim();
+}
+
+function addCategory() {
+  // Sync names from DOM first
+  syncCatNames();
+  cats.push({ name: 'Nueva categoría', keywords: [] });
+  renderCategories();
+  const lastIdx = cats.length - 1;
+  const input = document.querySelector(`#cat-card-${lastIdx} .cat-name-input`);
+  if (input) { input.focus(); input.select(); }
+}
+
+function removeCategory(idx) {
+  syncCatNames();
+  if (!confirm('¿Eliminar la categoría "' + cats[idx].name + '" y todas sus palabras clave?')) return;
+  cats.splice(idx, 1);
+  renderCategories();
+}
+
+function addKeyword(idx) {
+  const input = document.getElementById('kw-input-' + idx);
+  if (!input) return;
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+  if (!cats[idx].keywords.includes(val)) cats[idx].keywords.push(val);
+  renderCategories();
+  // Restore focus to the same category's input
+  const newInput = document.getElementById('kw-input-' + idx);
+  if (newInput) newInput.focus();
+}
+
+function removeKeyword(idx, kw) {
+  syncCatNames();
+  cats[idx].keywords = cats[idx].keywords.filter(k => k !== kw);
+  renderCategories();
+}
+
+function syncCatNames() {
+  document.querySelectorAll('.cat-name-input').forEach((input, idx) => {
+    if (cats[idx]) cats[idx].name = input.value.trim();
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  KEYWORDS — EXCLUSIONES
+// ═══════════════════════════════════════════════
+function renderExclusions() {
+  document.getElementById('excl-tags').innerHTML = excl.map(k => `
+    <span class="excl-tag">
+      ${escHtml(k)}
+      <button onclick="removeExclusion('${escAttr(k)}')" title="Eliminar">×</button>
+    </span>`).join('');
+}
+
+function addExclusion() {
+  const input = document.getElementById('new-excl-input');
+  const val   = input.value.trim().toLowerCase();
+  if (!val) return;
+  if (!excl.includes(val)) excl.push(val);
+  renderExclusions();
+  input.value = '';
+  input.focus();
+}
+
+function removeExclusion(kw) {
+  excl = excl.filter(k => k !== kw);
+  renderExclusions();
+}
+
+// ═══════════════════════════════════════════════
+//  GUARDAR FILTROS
+// ═══════════════════════════════════════════════
+async function saveKeywords() {
+  syncCatNames();
+  const btn = document.getElementById('btn-save-kw');
+  const validCats = cats.filter(c => c.name && c.keywords.length > 0);
+  if (!validCats.length) return showAlert('err', 'Agrega al menos una categoría con palabras clave.');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await apiFetch('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({
+        keywords_json:      JSON.stringify(catsToDict()),
+        exclusion_keywords: excl.join(','),
+      })
+    });
+    showAlert('ok', 'Filtros guardados. Se aplicarán en el próximo escaneo.');
+  } catch(e) { showAlert('err', 'Error al guardar: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar filtros'; }
+}
+
+// ═══════════════════════════════════════════════
+//  USUARIOS
+// ═══════════════════════════════════════════════
+async function loadUsers() {
+  try {
+    const d = await apiFetch('/api/users');
+    renderUsers(d.users || []);
+  } catch(e) {
+    document.getElementById('users-list').innerHTML =
+      '<div class="alert alert-err" style="margin:16px 0;">Error cargando usuarios: ' + e.message + '</div>';
+  }
+}
+
 function renderUsers(users) {
   if (!users.length) {
     document.getElementById('users-list').innerHTML =
@@ -219,16 +493,16 @@ function renderUsers(users) {
     <div class="user-row ${u.activo ? '' : 'inactive-row'}">
       <div class="user-avatar-sm">${(u.nombre || u.email).charAt(0).toUpperCase()}</div>
       <div>
-        <div class="user-name">${u.nombre || '—'}</div>
-        <div class="user-email-txt">${u.email}</div>
+        <div class="user-name">${escHtml(u.nombre || '—')}</div>
+        <div class="user-email-txt">${escHtml(u.email)}</div>
       </div>
       <span class="rol-badge ${u.rol === 'admin' ? 'rol-admin' : 'rol-user'}">${u.rol === 'admin' ? 'Admin' : 'Usuario'}</span>
       ${u.activo
-        ? `<div class="user-actions">
-             <button class="btn btn-outline btn-sm" onclick="changePassword('${u.email}')">Cambiar clave</button>
-             <button class="btn btn-danger btn-sm" onclick="deactivateUser('${u.email}')">Desactivar</button>
-           </div>`
-        : `<span style="margin-left:auto;font-size:11px;color:var(--muted);">Desactivado</span>`
+        ? '<div class="user-actions">' +
+            '<button class="btn btn-outline btn-sm" onclick="changePassword(\'' + escAttr(u.email) + '\')">Cambiar clave</button>' +
+            '<button class="btn btn-danger btn-sm" onclick="deactivateUser(\'' + escAttr(u.email) + '\')">Desactivar</button>' +
+          '</div>'
+        : '<span style="margin-left:auto;font-size:11px;color:var(--muted);">Desactivado</span>'
       }
     </div>`).join('');
 }
@@ -250,12 +524,12 @@ async function submitNewUser() {
   errEl.style.display = 'none';
   btn.disabled = true; btn.textContent = 'Agregando…';
   try {
-    const r = await apiFetch('/api/users', {
+    await apiFetch('/api/users', {
       method: 'POST',
       body: JSON.stringify({ nombre, email, password: pwd, rol })
     });
     closeModal();
-    showAlert('ok', `Usuario ${email} creado correctamente.`);
+    showAlert('ok', 'Usuario ' + email + ' creado correctamente.');
     loadUsers();
   } catch(e) {
     errEl.textContent = e.message;
@@ -264,16 +538,16 @@ async function submitNewUser() {
 }
 
 async function deactivateUser(email) {
-  if (!confirm(`¿Desactivar el acceso de ${email}?`)) return;
+  if (!confirm('¿Desactivar el acceso de ' + email + '?')) return;
   try {
     await apiFetch('/api/users?del=1', { method:'POST', body: JSON.stringify({ email }) });
-    showAlert('ok', `Usuario ${email} desactivado.`);
+    showAlert('ok', 'Usuario ' + email + ' desactivado.');
     loadUsers();
   } catch(e) { showAlert('err', 'Error: ' + e.message); }
 }
 
 async function changePassword(email) {
-  const pwd = prompt(`Nueva contraseña para ${email} (mínimo 6 caracteres):`);
+  const pwd = prompt('Nueva contraseña para ' + email + ' (mínimo 6 caracteres):');
   if (!pwd) return;
   if (pwd.length < 6) return alert('La contraseña debe tener al menos 6 caracteres.');
   try {
@@ -282,20 +556,30 @@ async function changePassword(email) {
   } catch(e) { showAlert('err', 'Error: ' + e.message); }
 }
 
-// ── Helpers ───────────────────────────────────────
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
 function showAlert(type, msg) {
   const el  = document.getElementById('global-alert');
   const ico = type === 'ok'
     ? '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
     : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-  el.className = `alert alert-${type === 'ok' ? 'ok' : 'err'}`;
-  el.innerHTML = ico + `<div>${msg}</div>`;
+  el.className = 'alert alert-' + (type === 'ok' ? 'ok' : 'err');
+  el.innerHTML = ico + '<div>' + msg + '</div>';
   el.style.display = 'flex';
   window.scrollTo(0, 0);
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
 }
 
-// Cierra modal al hacer clic fuera
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) {
+  return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
 document.getElementById('modal-new-user').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
