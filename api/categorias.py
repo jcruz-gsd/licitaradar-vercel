@@ -8,22 +8,36 @@ TABLA = "licitaciones_gsd"
 
 CATEGORIAS = {
     "Software y soluciones": [
-        "software", "solución tecnológica", "solución digital", "desarrollo web",
-        "aplicación", "plataforma digital", "transformación digital",
+        "software", "solución tecnológica", "solución digital",
+        "desarrollo web", "desarrollo de software", "aplicación móvil",
+        "plataforma digital", "transformación digital",
         "sistema informático", "sistema de información",
+        "erp", "crm", "business intelligence", "app móvil",
+        "sistema de gestión", "portal web",
     ],
     "Equipos y hardware": [
-        "computador", "laptop", "notebook", "tablet", "pantalla", "televisor",
-        "monitor", "impresora", "equipo computacional", "equipamiento tecnológico",
-        "equipos de computación", "hardware", "dispositivos tecnológicos",
+        "computador", "laptop", "notebook", "tablet",
+        "monitor", "impresora", "equipo computacional",
+        "equipamiento tecnológico", "equipos de computación",
+        "hardware", "dispositivos tecnológicos", "servidor",
+        "storage", "ups computacional", "data center",
+        "equipo informático", "pc escritorio", "all in one",
     ],
     "Servicios TI": [
-        "soporte técnico", "mantención", "infraestructura ti", "redes",
-        "ciberseguridad", "helpdesk", "mesa de ayuda", "licencias de software",
+        "soporte técnico informático", "soporte ti",
+        "mantención de equipos computacionales", "mantención de sistemas",
+        "mantención de red", "mantención correctiva de equipos",
+        "infraestructura ti", "redes informáticas", "redes de datos",
+        "ciberseguridad", "seguridad informática", "helpdesk",
+        "mesa de ayuda", "licencias de software", "cloud computing",
+        "hosting", "datacenter", "virtualización", "backup",
+        "soporte de software", "administración de sistemas",
     ],
     "Telecomunicaciones": [
-        "telecomunicaciones", "telefonía", "internet", "fibra óptica",
-        "conectividad", "banda ancha", "comunicaciones",
+        "telecomunicaciones", "telefonía ip", "internet",
+        "fibra óptica", "conectividad", "banda ancha",
+        "voip", "comunicaciones unificadas", "red wan",
+        "red lan", "enlace dedicado",
     ],
 }
 

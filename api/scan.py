@@ -14,24 +14,52 @@ TABLA = "licitaciones_gsd"
 
 CATEGORIAS = {
     "Software y soluciones": [
-        "software","solución tecnológica","solución digital","desarrollo web",
-        "aplicación","plataforma digital","transformación digital",
-        "sistema informático","sistema de información",
+        "software", "solución tecnológica", "solución digital",
+        "desarrollo web", "desarrollo de software", "aplicación móvil",
+        "plataforma digital", "transformación digital",
+        "sistema informático", "sistema de información",
+        "erp", "crm", "business intelligence", "app móvil",
+        "sistema de gestión", "portal web",
     ],
     "Equipos y hardware": [
-        "computador","laptop","notebook","tablet","pantalla","televisor",
-        "monitor","impresora","equipo computacional","equipamiento tecnológico",
-        "equipos de computación","hardware","dispositivos tecnológicos",
+        "computador", "laptop", "notebook", "tablet",
+        "monitor", "impresora", "equipo computacional",
+        "equipamiento tecnológico", "equipos de computación",
+        "hardware", "dispositivos tecnológicos", "servidor",
+        "storage", "ups computacional", "data center",
+        "equipo informático", "pc escritorio", "all in one",
     ],
     "Servicios TI": [
-        "soporte técnico","mantención","infraestructura ti","redes",
-        "ciberseguridad","helpdesk","mesa de ayuda","licencias de software",
+        "soporte técnico informático", "soporte ti",
+        "mantención de equipos computacionales", "mantención de sistemas",
+        "mantención de red", "mantención correctiva de equipos",
+        "infraestructura ti", "redes informáticas", "redes de datos",
+        "ciberseguridad", "seguridad informática", "helpdesk",
+        "mesa de ayuda", "licencias de software", "cloud computing",
+        "hosting", "datacenter", "virtualización", "backup",
+        "soporte de software", "administración de sistemas",
     ],
     "Telecomunicaciones": [
-        "telecomunicaciones","telefonía","internet","fibra óptica",
-        "conectividad","banda ancha","comunicaciones",
+        "telecomunicaciones", "telefonía ip", "internet",
+        "fibra óptica", "conectividad", "banda ancha",
+        "voip", "comunicaciones unificadas", "red wan",
+        "red lan", "enlace dedicado",
     ],
 }
+
+# Términos que DESCARTAN una licitación aunque haya match de keyword
+EXCLUSION_KEYWORDS = [
+    "inmueble", "edificio", "remodelación", "ampliación", "construcción",
+    "ascensor", "caldera", "gasfitería", "gasfiter", "plomería",
+    "sanitario", "cañería", "pintura", "techumb", "paviment",
+    "jardinería", "aseo", "limpieza", "fumigación",
+    "vehículo", "ambulancia", "camión", "furgón", "bus",
+    "alimento", "alimentación", "colación", "catering",
+    "dental", "odontológico", "médico", "clínico", "fármaco",
+    "vestuario", "uniforme", "calzado", "textil",
+    "mueble", "mobiliario", "silla", "escritorio de oficina",
+    "arriendo de inmueble", "comodato de inmueble",
+]
 
 ALL_KEYWORDS = [kw for kws in CATEGORIAS.values() for kw in kws]
 
@@ -56,14 +84,20 @@ def fetch_lics(fecha):
 def do_filter(licitaciones):
     out = []
     for l in licitaciones:
-        text = " ".join([
-            str(l.get("Nombre", "")),
-            str(l.get("Descripcion", "")),
-            str(l.get("NombreOrganismo", "")),
-        ]).lower()
+        nombre = str(l.get("Nombre", "")).lower()
+        desc   = str(l.get("Descripcion", "")).lower()
+        text   = nombre + " " + desc
+
+        # 1. Verificar que tenga al menos un keyword de TI
         matched = [kw for kw in ALL_KEYWORDS if kw in text]
         if not matched:
             continue
+
+        # 2. Descartar si contiene palabras de otros rubros
+        if any(ex in text for ex in EXCLUSION_KEYWORDS):
+            log.info("Descartada por exclusión: %s", l.get("Nombre", ""))
+            continue
+
         l["_kw"] = matched
         for cat, kws in CATEGORIAS.items():
             if any(k in matched for k in kws):
