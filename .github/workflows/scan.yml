@@ -1,0 +1,54 @@
+name: LicitaRadar — Escaneo Automático
+
+on:
+  schedule:
+    # Horarios en UTC (Chile = UTC-3 en invierno / UTC-4 en verano)
+    # 9:00 AM Chile  = 13:00 UTC  (ajusta a 12:00 en horario de verano)
+    # 1:00 PM Chile  = 17:00 UTC
+    # 5:00 PM Chile  = 21:00 UTC
+    - cron: '0 13 * * 1-5'   # 9:00 AM Chile — lunes a viernes
+    - cron: '0 17 * * 1-5'   # 1:00 PM Chile
+    - cron: '0 21 * * 1-5'   # 5:00 PM Chile
+  workflow_dispatch:           # Ejecución manual desde GitHub Actions
+
+jobs:
+  escaneo:
+    name: Escanear Mercado Público → Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Llamar endpoint /api/scan en Vercel
+        run: |
+          echo "🔍 Iniciando escaneo en $VERCEL_URL/api/scan"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "$VERCEL_URL/api/scan" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            --max-time 120)
+
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "Respuesta:   $BODY"
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Escaneo falló con status $HTTP_STATUS"
+            exit 1
+          fi
+
+          # Mostrar resumen
+          NEW=$(echo "$BODY"   | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('new',0))")
+          TOTAL=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))")
+          EMAIL=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print('✅ Enviado' if d.get('ok') else '— Sin correo')")
+
+          echo ""
+          echo "════════════════════════════════"
+          echo "  ✅ Escaneo completado"
+          echo "  📋 Licitaciones revisadas: $TOTAL"
+          echo "  🆕 Nuevas detectadas:      $NEW"
+          echo "  📧 Correo:                 $EMAIL"
+          echo "════════════════════════════════"
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}

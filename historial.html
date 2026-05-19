@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LicitaRadar — Historial</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app-root"></div>
+
+<script src="/js/app.js"></script>
+<script>
+document.getElementById('app-root').innerHTML = `
+<div class="app">
+  ${sidebarHTML()}
+  <div class="main">
+    ${topbarHTML()}
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Historial de licitaciones</div>
+          <div class="page-sub">Registro completo de licitaciones detectadas</div>
+        </div>
+        <button class="btn btn-outline" id="btn-export">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
+      </div>
+
+      <div id="scan-alert" class="alert" style="display:none;"></div>
+
+      <div class="card">
+        <div class="card-body" style="padding-bottom:12px;">
+          <div class="filter-bar">
+            <div class="search-wrap">
+              <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="search-input" id="q" placeholder="Buscar licitación u organismo…" autocomplete="off">
+            </div>
+            <select class="filter-select" id="estado-filter">
+              <option value="">Todos los estados</option>
+              <option value="Publicada">Publicada</option>
+              <option value="Cerrada">Cerrada</option>
+              <option value="Adjudicada">Adjudicada</option>
+              <option value="Evaluacion">En evaluación</option>
+            </select>
+            <button class="btn btn-primary" id="btn-buscar">Buscar</button>
+          </div>
+        </div>
+
+        <div class="table-wrap" id="table-area">
+          <div style="padding:50px;text-align:center;"><div class="spinner"></div></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+initSidebar('historial');
+setLastUpdated();
+
+let currentPage = 1;
+const PER_PAGE  = 10;
+
+loadHistorial();
+
+// Filters
+document.getElementById('btn-buscar').addEventListener('click', () => { currentPage = 1; loadHistorial(); });
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') { currentPage = 1; loadHistorial(); } });
+
+// Export
+document.getElementById('btn-export').addEventListener('click', exportCSV);
+
+async function loadHistorial() {
+  const q      = document.getElementById('q').value.trim();
+  const estado = document.getElementById('estado-filter').value;
+  const params = { page: currentPage, per_page: PER_PAGE };
+  if (q)      params.q      = q;
+  if (estado) params.estado = estado;
+
+  document.getElementById('table-area').innerHTML =
+    '<div style="padding:50px;text-align:center;"><div class="spinner"></div></div>';
+
+  try {
+    const d = await api.licitaciones(params);
+    renderTable(d.data || []);
+    renderPagination(d.total || 0);
+  } catch(e) {
+    document.getElementById('table-area').innerHTML =
+      `<div class="alert alert-err" style="margin:20px;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <div>Error cargando datos: ${e.message}</div>
+      </div>`;
+  }
+}
+
+function renderTable(rows) {
+  if (!rows.length) {
+    document.getElementById('table-area').innerHTML =
+      '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Sin resultados</div><div class="empty-sub">Prueba con otros filtros</div></div>';
+    return;
+  }
+  document.getElementById('table-area').innerHTML = `
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:36%">Licitación</th>
+        <th>Organismo</th>
+        <th>Estado</th>
+        <th>Palabras clave</th>
+        <th>Registrada</th>
+        <th>Notif.</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `
+        <tr>
+          <td><a class="tbl-name" href="${r.link||'#'}" target="_blank" title="${r.nombre||''}">${r.nombre||'—'}</a>
+              <small style="color:#94A3B8;font-size:11px;display:block;">${r.codigo_externo||''}</small></td>
+          <td class="tbl-org">${r.organismo||'—'}</td>
+          <td>${badgeHtml(r.estado)}</td>
+          <td style="color:#64748B;font-size:12px;max-width:160px;">${kwList(r.palabras_clave)}</td>
+          <td style="color:#64748B;font-size:12px;white-space:nowrap;">${fmtDate(r.fecha_registro)}</td>
+          <td style="text-align:center;">${r.notificado ? '✅' : '—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderPagination(total) {
+  const pages = Math.ceil(total / PER_PAGE);
+  const el    = document.getElementById('pagination');
+  if (pages <= 1) { el.innerHTML = `<span class="page-info">${total} resultado${total !== 1 ? 's' : ''}</span>`; return; }
+
+  let btns = '';
+  // Prev
+  btns += `<button class="pg-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage-1})">‹</button>`;
+  // Pages (show window of 5)
+  const start = Math.max(1, currentPage - 2);
+  const end   = Math.min(pages, start + 4);
+  for (let i = start; i <= end; i++) {
+    btns += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  // Next
+  btns += `<button class="pg-btn" ${currentPage === pages ? 'disabled' : ''} onclick="goPage(${currentPage+1})">›</button>`;
+
+  el.innerHTML = `<span class="page-info">${total} resultado${total !== 1 ? 's' : ''} · Pág. ${currentPage} de ${pages}</span>${btns}`;
+}
+
+function goPage(p) { currentPage = p; loadHistorial(); window.scrollTo(0, 0); }
+
+async function exportCSV() {
+  try {
+    const q      = document.getElementById('q').value.trim();
+    const estado = document.getElementById('estado-filter').value;
+    const params = { page: 1, per_page: 1000 };
+    if (q)      params.q      = q;
+    if (estado) params.estado = estado;
+    const d = await api.licitaciones(params);
+    const rows = d.data || [];
+    if (!rows.length) { alert('Sin datos para exportar'); return; }
+
+    const headers = ['Código','Nombre','Organismo','Estado','Palabras clave','Fecha registro','Link'];
+    const lines   = [headers.join(';')];
+    rows.forEach(r => {
+      const kw = Array.isArray(r.palabras_clave) ? r.palabras_clave.join(', ') : (r.palabras_clave||'');
+      lines.push([r.codigo_externo,r.nombre,r.organismo,r.estado,kw,fmtDate(r.fecha_registro),r.link].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(';'));
+    });
+    const blob = new Blob(['﻿'+lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `licitaradar-historial-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  } catch(e) { alert('Error al exportar: ' + e.message); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LicitaRadar — Categorías</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app-root"></div>
+
+<script src="/js/app.js"></script>
+<script>
+document.getElementById('app-root').innerHTML = `
+<div class="app">
+  ${sidebarHTML()}
+  <div class="main">
+    ${topbarHTML()}
+    <div class="content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Categorías</div>
+          <div class="page-sub">Distribución de licitaciones por área tecnológica</div>
+        </div>
+      </div>
+
+      <div id="scan-alert" class="alert" style="display:none;"></div>
+
+      <div class="cat-grid" id="cat-grid">
+        ${Array(4).fill('<div class="cat-card" style="opacity:.3;min-height:160px;"></div>').join('')}
+      </div>
+
+      <!-- System status -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Estado del sistema</span>
+          <span class="pill pill-ok"><span class="pill-dot"></span>Operativo</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">API Mercado Público</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#15803d;">
+                <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;"></span>
+                Conectada
+              </div>
+              <div style="font-size:12px;color:#94A3B8;margin-top:3px;">licitaciones.json v1</div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Base de datos</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#15803d;">
+                <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;"></span>
+                Conectada
+              </div>
+              <div style="font-size:12px;color:#94A3B8;margin-top:3px;">Supabase PostgreSQL</div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Escaneo automático</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#15803d;">
+                <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;"></span>
+                Activo
+              </div>
+              <div style="font-size:12px;color:#94A3B8;margin-top:3px;">GitHub Actions · L–V</div>
+            </div>
+          </div>
+
+          <div style="margin-top:22px;padding-top:18px;border-top:1px solid #F1F5F9;">
+            <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Palabras clave monitoreadas</div>
+            <div id="all-keywords" style="display:flex;flex-wrap:wrap;gap:5px;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>`;
+
+initSidebar('categorias');
+setLastUpdated();
+loadCategorias();
+
+async function loadCategorias() {
+  try {
+    const d = await api.categorias();
+    renderCats(d.categories || []);
+    renderAllKeywords(d.categories || []);
+  } catch(e) {
+    document.getElementById('cat-grid').innerHTML =
+      `<div style="grid-column:1/-1;" class="alert alert-err">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <div>Error: ${e.message}</div>
+      </div>`;
+  }
+}
+
+function renderCats(cats) {
+  const maxCount = Math.max(...cats.map(c => c.count), 1);
+  const icons = ['💻','⚙️','🛡️','📡'];
+  const colors = [
+    { bar: 'var(--teal), #3b82f6' },
+    { bar: '#3b82f6, #6366f1' },
+    { bar: '#22c55e, var(--teal)' },
+    { bar: '#f59e0b, #ef4444' },
+  ];
+
+  document.getElementById('cat-grid').innerHTML = cats.map((c, i) => `
+    <div class="cat-card">
+      <div class="cat-card-header">
+        <div>
+          <div style="font-size:20px;margin-bottom:4px;">${icons[i]||'📁'}</div>
+          <div class="cat-name">${c.name}</div>
+        </div>
+        <div class="cat-count">${fmtNum(c.count)}</div>
+      </div>
+      <div class="cat-bar">
+        <div class="cat-bar-fill" style="width:${Math.round((c.count/maxCount)*100)}%;background:linear-gradient(90deg,${colors[i]?.bar||'var(--teal),#3b82f6'});"></div>
+      </div>
+      <div style="font-size:11px;color:#94A3B8;margin-bottom:8px;">${c.count} licitación${c.count!==1?'es':''} detectada${c.count!==1?'s':''}</div>
+      <div class="cat-keywords">
+        ${(c.keywords||[]).map(k=>`<span class="kw-tag">${k}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderAllKeywords(cats) {
+  const all = cats.flatMap(c => c.keywords || []);
+  document.getElementById('all-keywords').innerHTML =
+    all.map(k => `<span class="kw-tag">${k}</span>`).join('') || '<span style="color:#94A3B8;font-size:13px;">Sin palabras clave</span>';
+}
+</script>
+</body>
+</html>
