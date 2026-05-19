@@ -95,6 +95,8 @@ document.getElementById('btn-scan-top').addEventListener('click', function() {
 loadDashboard();
 
 // ── Functions ────────────────────────────────────
+let activityChartInstance = null;   // guarda instancia para destruirla antes de recrear
+
 function statSkeleton(n) {
   return Array(n).fill('<div class="stat-card" style="opacity:.4;"><div class="stat-icon teal"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><div><div class="stat-value">—</div><div class="stat-label">Cargando…</div></div></div>').join('');
 }
@@ -145,13 +147,15 @@ function renderStats(d) {
 function renderChart(data) {
   const ctx = document.getElementById('activity-chart');
   if (!ctx) return;
+  // Destruir instancia previa antes de crear una nueva
+  if (activityChartInstance) { activityChartInstance.destroy(); activityChartInstance = null; }
   const labels = data.map(r => {
     const d = new Date(r.date);
     return d.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit' });
   });
   const values = data.map(r => r.count);
 
-  new Chart(ctx, {
+  activityChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
@@ -180,7 +184,7 @@ function renderChart(data) {
         y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 }, color: '#94A3B8', precision: 0 }, beginAtZero: true }
       }
     }
-  });
+  });   // fin Chart
 }
 
 function renderRecent(rows) {
