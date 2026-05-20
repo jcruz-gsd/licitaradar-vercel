@@ -558,17 +558,119 @@ input.form-input:focus { border-color: var(--navy); background: #fff; box-shadow
 .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
 
 /* ════════════════════════════════════════
-   RESPONSIVE
+   HAMBURGER BUTTON (visible solo en móvil)
    ════════════════════════════════════════ */
-@media (max-width: 900px) {
+.hamburger {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-mid); border-radius: var(--r-sm);
+  transition: background .15s; flex-shrink: 0;
+  margin-right: 8px;
+}
+.hamburger:hover { background: var(--bg); }
+.hamburger svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+/* ════════════════════════════════════════
+   SIDEBAR OVERLAY (móvil)
+   ════════════════════════════════════════ */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity .25s;
+}
+.sidebar-overlay.open { display: block; opacity: 1; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE — TABLET (≤ 1024px)
+   ════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 210px; }
+  .content { padding: 20px 20px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .two-col    { grid-template-columns: 1fr; }
   .cat-grid   { grid-template-columns: 1fr; }
+  .tbl-name   { max-width: 220px; }
 }
 
-@media (max-width: 640px) {
-  .sidebar { transform: translateX(-100%); }
-  .main    { margin-left: 0; }
+/* ════════════════════════════════════════
+   RESPONSIVE — MÓVIL (≤ 768px)
+   ════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Mostrar hamburguesa */
+  .hamburger { display: flex; }
+
+  /* Sidebar se desliza */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index: 100;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Main ocupa todo el ancho */
+  .main { margin-left: 0; }
+
+  /* Topbar */
+  .topbar { padding: 0 14px; gap: 6px; }
+  .pill   { display: none; }          /* ocultar pills de estado en móvil */
+
+  /* Contenido */
+  .content { padding: 14px 14px; }
+
+  /* Grids */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .two-col    { grid-template-columns: 1fr; gap: 12px; }
+  .cat-grid   { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Page header: apilar botón debajo del título */
+  .page-header { flex-direction: column; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+  .page-header > .btn,
+  .page-header > button { width: 100%; justify-content: center; }
+
+  /* Barra de filtros: apilar */
+  .filter-bar { flex-direction: column; gap: 8px; }
+  .search-wrap { max-width: 100%; }
+  select.filter-select { width: 100%; }
+
+  /* Tabla: scroll horizontal */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tbl-name   { max-width: 160px; }
+
+  /* Paginación compacta */
+  .pagination { padding: 10px 14px; flex-wrap: wrap; gap: 4px; }
+  .page-info  { width: 100%; margin-bottom: 4px; }
+
+  /* Login */
   .login-layout { grid-template-columns: 1fr; }
   .login-left   { display: none; }
+  .login-right  { padding: 40px 24px; min-height: 100vh; }
+
+  /* Cards en configuración */
+  .form-row { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE — MÓVIL PEQUEÑO (≤ 480px)
+   ════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .stats-grid  { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card   { padding: 14px 12px; gap: 10px; }
+  .stat-icon   { width: 34px; height: 34px; }
+  .stat-value  { font-size: 22px; }
+  .stat-label  { font-size: 11px; }
+
+  .page-title  { font-size: 18px; }
+  .card-header { padding: 14px 14px 10px; flex-wrap: wrap; gap: 8px; }
+  .card-body   { padding: 14px 14px; }
+
+  .form-heading { font-size: 22px; }
+  .login-right  { padding: 32px 20px; }
+
+  /* Topbar: ocultar hora */
+  #last-updated { display: none; }
 }

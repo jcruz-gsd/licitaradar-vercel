@@ -64,9 +64,10 @@ function initSidebar(activePage) {
   if (emailEl) emailEl.textContent = s.user;
   if (avatarEl) avatarEl.textContent = s.user.charAt(0).toUpperCase();
 
-  // Active nav
+  // Active nav + cerrar sidebar al navegar en móvil
   document.querySelectorAll('.nav-link[data-page]').forEach(el => {
     el.classList.toggle('active', el.dataset.page === activePage);
+    el.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
   });
 
   // Logout btn
@@ -144,10 +145,29 @@ function setLastUpdated() {
   }
 }
 
-// Sidebar HTLM template (injected into pages)
+// ── Sidebar toggle (mobile) ──────────────────────
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar) sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open');
+  document.body.style.overflow =
+    sidebar && sidebar.classList.contains('open') ? 'hidden' : '';
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Sidebar HTML template (injected into pages)
 function sidebarHTML() {
   return `
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -205,6 +225,9 @@ function sidebarHTML() {
 function topbarHTML() {
   return `
 <header class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Abrir menú">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
   <span class="pill pill-ok"><span class="pill-dot"></span>API Mercado Público</span>
   <span class="pill pill-ok"><span class="pill-dot"></span>BD Supabase</span>
   <span class="topbar-right" style="display:flex;align-items:center;gap:14px;">
